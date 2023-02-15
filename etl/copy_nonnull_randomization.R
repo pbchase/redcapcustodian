@@ -4,7 +4,7 @@ library(tidyverse)
 library(lubridate)
 library(dotenv)
 
-set_script_run_time()
+init_etl("copy_nonnull_randomization")
 
 rc_conn <- connect_to_redcap_db()
 
@@ -64,7 +64,7 @@ allocations <-
   )
 
 # Write the allocation tables
-write_allocations <- function(allocations, project_status_to_write) {
+write_allocations <- function(project_status_to_write, allocations) {
   base_name = "RandomizationAllocation"
   date_time_stamp = format(get_script_run_time(), "%Y%m%d%H%M%S")
   project_statuses <- setNames(c(0,1), c("development", "production"))
@@ -75,8 +75,7 @@ write_allocations <- function(allocations, project_status_to_write) {
     write_csv(here::here("output", paste(base_name, names(project_statuses)[project_status_to_write + 1], date_time_stamp, sep = "_")))
 }
 
-write_allocations(allocations, 0)
-write_allocations(allocations, 1)
+walk(c(0,1), write_allocations, allocations)
 
 # TODO: Add code to isolate allocation data, transform it for write, and write it
 
